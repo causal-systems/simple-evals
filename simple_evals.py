@@ -18,7 +18,10 @@ from .sampler.chat_completion_sampler import (
 from .sampler.o_chat_completion_sampler import OChatCompletionSampler
 from .sampler.responses_sampler import ResponsesSampler
 from .sampler.claude_sampler import ClaudeCompletionSampler, CLAUDE_SYSTEM_MESSAGE_LMSYS
+from .sampler.grader_ablation_sampler import GraderAblationSampler
+import dotenv
 
+dotenv.load_dotenv()
 
 def main():
     parser = argparse.ArgumentParser(
@@ -140,6 +143,7 @@ def main():
             model="claude-3-opus-20240229",
             system_message=CLAUDE_SYSTEM_MESSAGE_LMSYS,
         ),
+        "grader_ablation_3b": GraderAblationSampler(),
     }
 
     if args.list_models:
@@ -200,7 +204,7 @@ def main():
 
     evals = {
         eval_name: get_evals(eval_name, args.debug)
-        for eval_name in ["simpleqa", "mmlu", "math", "gpqa", "mgsm", "drop", "humaneval", "browsecomp"]
+        for eval_name in ["gpqa"] # TODO: choose evals
     }
     print(evals)
     debug_suffix = "_DEBUG" if args.debug else ""
