@@ -174,7 +174,7 @@ def main():
                 return MathEval(
                     equality_checker=equality_checker,
                     num_examples=num_examples,
-                    n_repeats=1 if debug_mode else 10,
+                    n_repeats=1 if debug_mode else 1,
                 )
             case "gpqa":
                 return GPQAEval(
@@ -204,7 +204,7 @@ def main():
 
     evals = {
         eval_name: get_evals(eval_name, args.debug)
-        for eval_name in ["gpqa"] # TODO: choose evals
+        for eval_name in ["math"] # TODO: choose evals
     }
     print(evals)
     debug_suffix = "_DEBUG" if args.debug else ""

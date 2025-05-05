@@ -54,6 +54,8 @@ class GraderAblationSampler(SamplerBase):
                 
                 # Parse and return the response
                 result = response.json()
+                if "answer:" not in result["answer"].lower():
+                    result["answer"] = "Answer: " + result["answer"]
                 return result["answer"]  # Adjust this based on actual response structure
                 
             except requests.exceptions.RequestException as e:
