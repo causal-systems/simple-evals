@@ -226,6 +226,8 @@ def main():
                 f.write(json.dumps(metrics, indent=2))
             print(f"Writing results to {result_filename}")
             mergekey2resultpath[f"{file_stem}"] = result_filename
+        if isinstance(sampler, GraderAblationSampler):
+            print(f"{model_name=}, mean_response_length={sampler.num_tokens/sampler.num_calls}")
     merge_metrics = []
     for eval_model_name, result_filename in mergekey2resultpath.items():
         try:

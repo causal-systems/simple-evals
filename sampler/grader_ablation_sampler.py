@@ -16,6 +16,8 @@ class GraderAblationSampler(SamplerBase):
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.image_format = "base64"
+        self.num_tokens = 0
+        self.num_calls = 0
 
     def _handle_image(
         self, image: str, encoding: str = "base64", format: str = "png", fovea: int = 768
@@ -54,6 +56,8 @@ class GraderAblationSampler(SamplerBase):
                 
                 # Parse and return the response
                 result = response.json()
+                self.num_tokens += result["num_tokens"]
+                self.num_calls += 1
                 if "answer:" not in result["answer"].lower():
                     result["answer"] = "Answer: " + result["answer"]
                 return result["answer"]  # Adjust this based on actual response structure
