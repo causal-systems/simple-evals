@@ -1,3 +1,4 @@
+import os
 import time
 import requests
 import json
@@ -42,8 +43,9 @@ class GraderAblationSampler(SamplerBase):
                 }
 
                 # Make POST request to local endpoint
+                port = os.getenv("PORT")
                 response = requests.post(
-                    "http://localhost:8000/answer",
+                    f"http://localhost:{port}/answer",
                     headers={
                         "accept": "application/json",
                         "Content-Type": "application/json"

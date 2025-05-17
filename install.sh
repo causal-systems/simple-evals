@@ -3,4 +3,4 @@ pip install -e human-eval
 pip install openai
 pip install anthropic
 
-python -m simple-evals.simple_evals --model grader_ablation_3b
+# python -m simple-evals.simple_evals --model grader_ablation_3b

@@ -1,5 +1,6 @@
 import json
 import argparse
+import os
 import pandas as pd
 from . import common
 from .browsecomp_eval import BrowseCompEval
@@ -204,7 +205,7 @@ def main():
 
     evals = {
         eval_name: get_evals(eval_name, args.debug)
-        for eval_name in ["math"] # TODO: choose evals
+        for eval_name in [os.getenv("EVAL")] # TODO: choose evals
     }
     print(evals)
     debug_suffix = "_DEBUG" if args.debug else ""
