@@ -251,7 +251,7 @@ def main():
     print("\nAll results: ")
     print(merge_metrics_df.to_markdown())
     if os.path.exists("/root"):
-        with open("/root/simple_evals_output.json", "w") as f:
+        with open(os.getenv("OUTPUT_PATH", "/root/simple_evals_output.json"), "w") as f:
             merge_metrics_df.to_json(f)
     return merge_metrics
 
