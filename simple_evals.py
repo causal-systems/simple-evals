@@ -221,14 +221,17 @@ def main():
             with open(report_filename, "w") as fh:
                 fh.write(common.make_report(result))
             metrics = result.metrics | {"score": result.score}
+            if isinstance(sampler, GraderAblationSampler):
+                print(f"{model_name=}, mean_response_length={sampler.num_tokens/sampler.num_calls}")
+                metrics = metrics | { "mean_response_length": sampler.num_tokens/sampler.num_calls }
+                sampler.num_calls = 0
+                sampler.num_tokens = 0
             print(metrics)
             result_filename = f"/tmp/{file_stem}{debug_suffix}.json"
             with open(result_filename, "w") as f:
                 f.write(json.dumps(metrics, indent=2))
             print(f"Writing results to {result_filename}")
             mergekey2resultpath[f"{file_stem}"] = result_filename
-        if isinstance(sampler, GraderAblationSampler):
-            print(f"{model_name=}, mean_response_length={sampler.num_tokens/sampler.num_calls}")
     merge_metrics = []
     for eval_model_name, result_filename in mergekey2resultpath.items():
         try:
@@ -247,6 +250,9 @@ def main():
     )
     print("\nAll results: ")
     print(merge_metrics_df.to_markdown())
+    if os.path.exists("/root"):
+        with open("/root/simple_evals_output.json", "w") as f:
+            merge_metrics_df.to_json(f)
     return merge_metrics
 
 
