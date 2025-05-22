@@ -205,7 +205,7 @@ def main():
 
     evals = {
         eval_name: get_evals(eval_name, args.debug)
-        for eval_name in [os.getenv("EVAL")] # TODO: choose evals
+        for eval_name in os.getenv("EVALS", "").split(";") # TODO: choose evals
     }
     print(evals)
     debug_suffix = "_DEBUG" if args.debug else ""
