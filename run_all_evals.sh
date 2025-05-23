@@ -75,6 +75,8 @@ for IDX in "${!GPUS[@]}"; do (
       continue   # skip to next DIR
     fi
 
+    echo "[$(date +%H:%M:%S)] GPU $GPU_ID → started server"
+
     ######################
     # 2. run the evals
     ######################
@@ -89,6 +91,7 @@ for IDX in "${!GPUS[@]}"; do (
     # 3. shutdown server
     ######################
     kill "$SERVER_PID"; wait "$SERVER_PID" 2>/dev/null || true
+    echo "[$(date +%H:%M:%S)] GPU $GPU_ID → stopped server"
   done
 )& done
 wait  # wait for all GPU workers
