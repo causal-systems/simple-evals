@@ -172,8 +172,12 @@ def grade(question: str, expected: str, actual: str) -> bool:
             "Authorization": f"Bearer {os.getenv('GRADER_API_KEY', '')}"
         }
     )
-    response_json = res.json()
-    return response_json["reward"] > 0.5
+    try:
+        response_json = res.json()
+        return response_json["reward"] > 0.5
+    except:
+        print(f"Invalid response: {res}")
+        return False
 
 def _compute_stat(values: list, stat: str):
     if stat == "mean":

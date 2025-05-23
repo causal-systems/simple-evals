@@ -63,8 +63,8 @@ for IDX in "${!GPUS[@]}"; do (
       > "$SRV_LOG" 2>&1 &
     SERVER_PID=$!
 
-    # wait (up to 120s) for server to open the port; else abort this step
-    for _ in {1..120}; do
+    # wait (up to 180s) for server to open the port; else abort this step
+    for _ in {1..180}; do
       nc -z localhost "$PORT" 2>/dev/null && break
       sleep 1
     done
