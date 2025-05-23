@@ -227,7 +227,7 @@ def main():
                 sampler.num_calls = 0
                 sampler.num_tokens = 0
             print(metrics)
-            result_filename = f"/tmp/{file_stem}{debug_suffix}.json"
+            result_filename = f"/tmp/{os.getenv('CUDA_VISIBLE_DEVICES', '')}{file_stem}{debug_suffix}.json"
             with open(result_filename, "w") as f:
                 f.write(json.dumps(metrics, indent=2))
             print(f"Writing results to {result_filename}")
