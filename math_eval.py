@@ -11,7 +11,7 @@ from typing import Literal
 import pandas
 
 from . import common
-from .common import ANSWER_PATTERN, HTML_JINJA, check_equality
+from .common import ANSWER_PATTERN, HTML_JINJA, grade
 from .types import Eval, EvalResult, SamplerBase, SingleEvalResult
 
 QUERY_TEMPLATE = """
@@ -248,7 +248,8 @@ class MathEval(Eval):
             response_text = sampler(prompt_messages)
             match = re.search(ANSWER_PATTERN, response_text)
             extracted_answer = match.group(1) if match else parse_answer(response_text)
-            score = float(check_equality(self.equality_checker, row["Answer"], extracted_answer))
+            # score = float(check_equality(self.equality_checker, row["Answer"], extracted_answer))
+            score = grade(prompt_messages[0]["content"], row["Answer"], str(extracted_answer))
             html = common.jinja_env.from_string(HTML_JINJA).render(
                 prompt_messages=prompt_messages,
                 next_message=dict(content=response_text, role="assistant"),

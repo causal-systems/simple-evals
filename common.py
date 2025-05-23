@@ -158,6 +158,22 @@ def check_equality(sampler: SamplerBase, expr1: str, expr2: str):
     response = sampler([dict(content=prompt, role="user")])
     return response.lower().strip() == "yes"
 
+def grade(question: str, expected: str, actual: str) -> bool:
+    res = requests.post(
+        os.getenv("GRADER_ENDPOINT", "http://localhost:8000/grade"),
+        json={
+            "question": question,
+            "reference_answer": expected,
+            "model_answer": actual,
+            "max_tokens": 2000,
+            "temperature": 0
+        },
+        headers={
+            "Authorization": f"Bearer {os.getenv('GRADER_API_KEY', '')}"
+        }
+    )
+    response_json = res.json()
+    return response_json["reward"] > 0.5
 
 def _compute_stat(values: list, stat: str):
     if stat == "mean":
