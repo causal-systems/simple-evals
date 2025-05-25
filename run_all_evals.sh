@@ -81,7 +81,6 @@ for IDX in "${!GPUS[@]}"; do (
     # 2. run the evals
     ######################
     PORT=$PORT \
-    EVALS="gpqa;math" \
     OUTPUT_PATH="$OUT_JSON" \
     GRADER_ENDPOINT=https://xu9earqqqeaf9l-8000.proxy.runpod.net/grade \
     python -m simple-evals.simple_evals --model grader_ablation_3b \

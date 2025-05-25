@@ -1,15 +1,20 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from . import common
+from .common import HTML_JINJA, SingleEvalResult
 from nltk.stem.porter import *
 from sklearn.metrics import balanced_accuracy_score
-from types import Eval, EvalResult, SamplerBase
-from typing import List
+from .types import Eval, EvalResult, SamplerBase
+from typing import Any, List
 import numpy as np
 import pandas as pd
 import random
 import re
 import string
+from datasets import load_dataset
 
-def generate_prompts(prompt_template: str, data_df: pd.DataFrame) -> list[str]:
+
+def generate_prompts(prompt_template: str, dicts: list[dict]) -> list[str]:
     """
     Generates prompts for the rows in data_df using the template prompt_template.
 
@@ -25,7 +30,6 @@ def generate_prompts(prompt_template: str, data_df: pd.DataFrame) -> list[str]:
     ), f"Prompt template has no fields to fill, {prompt_template}"
 
     prompts = []
-    dicts = data_df.to_dict(orient="records")
     for dd in dicts:
         prompt = str(prompt_template)
         for k, v in dd.items():
@@ -748,38 +752,67 @@ def evaluate_ssla(generations: List[str], answers: List[str]):
     f1 = 2 * tp / (2 * tp + fp + fn)
     return f1
 
+def _load_task(task_name):
+    """
+    Helper to load a single LegalBench task.
+    Returns a tuple (task_name, DatasetDict).
+    """
+    ds = load_dataset("nguha/legalbench", task_name, trust_remote_code=True)
+    return task_name, ds
+
+def load_all_tasks(tasks, max_workers=None):
+    """
+    Loads all LegalBench tasks in parallel.
+    Returns a dict mapping task names to their DatasetDicts.
+    """
+    results = {}
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(_load_task, t) for t in tasks]
+        for future in as_completed(futures):
+            task_name, ds = future.result()
+            results[task_name] = ds
+    return results
+
+
+
 class LegalBenchEval(Eval):
-    def __init__(self, num_examples: int | None = None):
+    def __init__(self, num_examples: int | None = None, tasks_dir: str | Path = Path(__file__).parent / "legalbench/tasks"):
         self.num_examples = num_examples
+        # load all tasks into a dict: task_name -> DatasetDict
+        self.datasets = load_all_tasks(TASKS)
+
+        # now build a flat list of example‐dicts just like your CSV case
+        self.examples: list[dict[str, Any]] = []
+        for task_name, ds in self.datasets.items():
+            df = ds["test"].to_pandas()
+            # if num_examples is set, truncate
+            if self.num_examples is not None:
+                df = df.iloc[: self.num_examples]
+            # convert each row to a dict and extend the list
+            examples = [row.to_dict() | { "task": task_name } for _, row in df.iterrows()]
+            self.examples.extend(examples)
+
+        self.prompt_templates: dict[str, str] = {}
+        for task_name in self.datasets.keys():
+            with open(Path(tasks_dir) / f"{task_name}/base_prompt.txt") as in_file:
+                self.prompt_templates[task_name] = in_file.read()
 
     def __call__(self, sampler: SamplerBase) -> EvalResult:
         def fn(row: dict):
             prompt_messages = [
-                sampler._pack_message(
-                    content=format_multichoice_question(row), role="user"
-                )
+                sampler._pack_message(content=generate_prompts(self.prompt_templates[row["task"]], [row])[0], role="user")
             ]
-            response_text = normalize_response(sampler(prompt_messages))
-            extracted_answer = None
-            for answer_regex in MULTILINGUAL_ANSWER_REGEXES:
-                regex = MULTILINGUAL_ANSWER_PATTERN_TEMPLATE.format(answer_regex)
-                match = re.search(regex, response_text)
-                if match:
-                    extracted_answer = normalize_extracted_answer(match.group(1))
-                    break
-            score = 1.0 if extracted_answer == row["Answer"] else 0.0
+            response_text = sampler(prompt_messages)
+            score = evaluate(row["task"],  [response_text], [row["answer"]])
             html = common.jinja_env.from_string(HTML_JINJA).render(
                 prompt_messages=prompt_messages,
                 next_message=dict(content=response_text, role="assistant"),
                 score=score,
-                correct_answer=row["Answer"],
-                extracted_answer=extracted_answer,
+                correct_answer=row["answer"],
+                extracted_answer="todo"
             )
             convo = prompt_messages + [dict(content=response_text, role="assistant")]
-            category = subject2category.get(row["Subject"], "other")
-            return SingleEvalResult(
-                html=html, score=score, metrics={category: score}, convo=convo
-            )
+            return SingleEvalResult(html=html, score=score, convo=convo)
 
         results = common.map_with_progress(fn, self.examples)
         return common.aggregate_results(results)
