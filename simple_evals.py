@@ -6,6 +6,8 @@ from collections import defaultdict
 import dotenv
 import pandas as pd
 
+from .legalbench_eval import LegalBenchEval
+
 from . import common
 from .browsecomp_eval import BrowseCompEval
 from .drop_eval import DropEval
@@ -143,6 +145,8 @@ def get_evals(eval_name: str, debug_mode: bool, args_examples: int | None):
                 grader_model=ChatCompletionSampler(model="gpt-4o"),
                 num_examples=10 if debug_mode else num_examples,
             )
+        case "legalbench":
+            return LegalBenchEval(num_examples=10 if debug_mode else num_examples)
         case _:
             raise ValueError(f"Unrecognized eval type: {eval_name}")
 
