@@ -805,7 +805,6 @@ class LegalBenchEval(Eval):
             response_text = sampler(prompt_messages)
             # score = evaluate(row["task"],  [response_text], [row["answer"]])
             score = grade(prompt_messages[0]["content"], row["answer"], response_text)
-            print(f"{prompt_messages=}, {response_text=}, answer={row['answer']}, {score=}")
             html = common.jinja_env.from_string(HTML_JINJA).render(
                 prompt_messages=prompt_messages,
                 next_message=dict(content=response_text, role="assistant"),
