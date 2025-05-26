@@ -60,8 +60,6 @@ class GraderAblationSampler(SamplerBase):
                 result = response.json()
                 self.num_tokens += result["num_tokens"]
                 self.num_calls += 1
-                if "answer:" not in result["answer"].lower():
-                    result["answer"] = "Answer: " + result["answer"]
                 return result["answer"]  # Adjust this based on actual response structure
                 
             except requests.exceptions.RequestException as e:

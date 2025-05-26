@@ -7,6 +7,7 @@ import dotenv
 import pandas as pd
 
 from .legalbench_eval import LegalBenchEval
+from .medqa_eval import MedQAEval
 
 from . import common
 from .browsecomp_eval import BrowseCompEval
@@ -146,7 +147,9 @@ def get_evals(eval_name: str, debug_mode: bool, args_examples: int | None):
                 num_examples=10 if debug_mode else num_examples,
             )
         case "legalbench":
-            return LegalBenchEval(num_examples=10 if debug_mode else num_examples)
+            return LegalBenchEval(num_examples=10 if debug_mode else 50)
+        case "medqa":
+            return MedQAEval(num_examples=10 if debug_mode else None)
         case _:
             raise ValueError(f"Unrecognized eval type: {eval_name}")
 

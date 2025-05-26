@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from . import common
-from .common import HTML_JINJA, SingleEvalResult
+from .common import HTML_JINJA, SingleEvalResult, grade
 from nltk.stem.porter import *
 from sklearn.metrics import balanced_accuracy_score
 from .types import Eval, EvalResult, SamplerBase
@@ -803,7 +803,9 @@ class LegalBenchEval(Eval):
                 sampler._pack_message(content=generate_prompts(self.prompt_templates[row["task"]], [row])[0], role="user")
             ]
             response_text = sampler(prompt_messages)
-            score = evaluate(row["task"],  [response_text], [row["answer"]])
+            # score = evaluate(row["task"],  [response_text], [row["answer"]])
+            score = grade(prompt_messages[0]["content"], row["answer"], response_text)
+            print(f"{prompt_messages=}, {response_text=}, answer={row['answer']}, {score=}")
             html = common.jinja_env.from_string(HTML_JINJA).render(
                 prompt_messages=prompt_messages,
                 next_message=dict(content=response_text, role="assistant"),
