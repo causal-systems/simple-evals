@@ -178,6 +178,26 @@ def grade(question: str, expected: str, actual: str) -> bool:
     except:
         print(f"Invalid response: {res}")
         return False
+    
+def verify(question: str, answer: str) -> bool:
+    res = requests.post(
+        os.getenv("VERIFIER_ENDPOINT", "http://localhost:8000/verify"),
+        json={
+            "question": question,
+            "model_answer": answer,
+            "max_tokens": 8192,
+            "temperature": 0
+        },
+        headers={
+            "Authorization": f"Bearer {os.getenv('VERIFIER_API_KEY', '')}"
+        }
+    )
+    try:
+        response_json = res.json()
+        return response_json["reward"] > 0.5
+    except:
+        print(f"Invalid response: {res}")
+        return False
 
 def _compute_stat(values: list, stat: str):
     if stat == "mean":

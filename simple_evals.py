@@ -147,7 +147,7 @@ def get_evals(eval_name: str, debug_mode: bool, args_examples: int | None):
                 num_examples=10 if debug_mode else num_examples,
             )
         case "legalbench":
-            return LegalBenchEval(num_examples=10)
+            return LegalBenchEval(num_examples=10) # there are 160 subsets, take 10 from each
         case "medqa":
             return MedQAEval(num_examples=10 if debug_mode else None)
         case _:
