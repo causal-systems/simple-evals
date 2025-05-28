@@ -30,6 +30,45 @@ import pandas as pd
 import requests
 from logging import getLogger
 import vllm
+from transformers import PreTrainedTokenizer, AutoTokenizer
+
+def create_chat_tokens_promptonly(
+  system_prompt: str, 
+  user_prompt: str, 
+  tokenizer: PreTrainedTokenizer,
+):
+    """
+    Creates a prompt template by combining system, user, and assistant prompts with appropriate formatting.
+    Args:
+    system_prompt (str): The system instructions/context
+    user_prompt (str): The user's input/question
+    assistant_answer (str): The assistant's response
+    tokenizer (Tokenizer): Tokenizer instance for processing the prompts
+    Returns:
+    str: The formatted prompt template combining all inputs
+    """
+
+    tokens = []
+    tokens.append(tokenizer.convert_tokens_to_ids("<|endoftext|>"))
+    tokens.append(tokenizer.convert_tokens_to_ids("<|im_start|>"))
+    tokens.extend(tokenizer.encode('system'))
+    tokens.extend(tokenizer.encode('\n'))
+    tokens.extend(tokenizer.encode(system_prompt))
+    tokens.append(tokenizer.convert_tokens_to_ids("<|im_end|>"))
+    tokens.extend(tokenizer.encode('\n'))
+
+    tokens.append(tokenizer.convert_tokens_to_ids("<|im_start|>"))
+    tokens.extend(tokenizer.encode('user'))
+    tokens.extend(tokenizer.encode('\n'))
+    tokens.extend(tokenizer.encode(user_prompt))
+    tokens.append(tokenizer.convert_tokens_to_ids("<|im_end|>"))
+    tokens.extend(tokenizer.encode('\n'))
+
+    tokens.append(tokenizer.convert_tokens_to_ids("<|im_start|>"))
+    tokens.extend(tokenizer.encode('assistant'))
+    tokens.extend(tokenizer.encode('\n'))
+
+    return tokens
 
 ###############################################################################
 # Constants & system prompts – keep as-is unless you have a good reason.
@@ -145,22 +184,39 @@ def main(
         reference_answers = df["reference_answer"]
         sources = df["source"]
         llm = vllm.LLM(model="GeneralReasoning/beaglefinal")
+        tokenizer = AutoTokenizer.from_pretrained("GeneralReasoning/beaglefinal")
         system_prompt = (
             "You are an inference-time checker that compares a reference answer with a model answer, "
             "and returns a yes/no answer corresponding to whether the model answer is correct."
         )
-        dialogs = [
-            [
-                dict(role="system", content=system_prompt),
-                dict(role="user", content=(
-                    f"Question: {question}\n\n"
-                    f"Reference Answer: {reference_answer}\n\n"
-                    f"Model Answer: {model_answer}"
-                ))
-            ]
+        # dialogs = [
+        #     [
+        #         dict(role="system", content=system_prompt),
+        #         dict(role="user", content=(
+        #             f"Question: {question}\n\n"
+        #             f"Reference Answer: {reference_answer}\n\n"
+        #             f"Model Answer: {model_answer}"
+        #         ))
+        #     ]
+        #     for question, reference_answer, model_answer in zip(questions, reference_answers, model_answers)
+        # ]
+        # outputs = llm.chat(dialogs, sampling_params=vllm.SamplingParams(temperature=0, max_tokens=8192))
+
+        dialog_tokens = [
+            {'prompt_token_ids': create_chat_tokens_promptonly(system_prompt, (
+                f"Question: {question}\n\n"
+                f"Reference Answer: {reference_answer}\n\n"
+                f"Model Answer: {model_answer}"
+            ), tokenizer)}
             for question, reference_answer, model_answer in zip(questions, reference_answers, model_answers)
         ]
-        outputs = llm.chat(dialogs, sampling_params=vllm.SamplingParams(temperature=0, max_tokens=8192))
+        # llm_engine.generate(
+        #     {"prompt_token_ids": prompt_token_ids}, 
+        #     sampling_params,
+        #     request_id
+        # )
+        outputs = llm.generate(dialog_tokens, sampling_params=vllm.SamplingParams(temperature=0, max_tokens=8192))
+
         grader_outputs = [x.outputs[0].text for x in outputs]
         grader_scores: list[float] = []
         for x in grader_outputs:
