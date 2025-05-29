@@ -144,7 +144,7 @@ def main(
 
     if stage == "model" and not os.path.exists("outputs/pipeline/" + str(checkpoint_dir).replace("/", "_") + "_model" + ".parquet"):
         ds_path = download_from_s3_cached(dataset_s3_uri)
-        df = pd.read_parquet(ds_path, engine="pyarrow")[:20]
+        df = pd.read_parquet(ds_path, engine="pyarrow")
         questions = [msg[1]["content"] for msg in df["prompt"]]
         reference_answers = list(df["reward_model"].apply(lambda x: x["ground_truth"]))
         sources = list(df["data_source"])
@@ -215,7 +215,7 @@ def main(
         #     sampling_params,
         #     request_id
         # )
-        outputs = llm.generate(dialog_tokens, sampling_params=vllm.SamplingParams(temperature=0, max_tokens=8192))
+        outputs = llm.generate(dialog_tokens, sampling_params=vllm.SamplingParams(temperature=0, max_tokens=8192, skip_special_tokens=False))
 
         grader_outputs = [x.outputs[0].text for x in outputs]
         grader_scores: list[float] = []

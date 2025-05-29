@@ -11,9 +11,9 @@ HF_HOME=${HF_HOME:-/workspace/.cache/huggingface}
 HF_TOKEN=${HF_TOKEN:-}               # optional – warns if missing
 VLLM_USE_V1=0
 
-CHECKPOINT_ROOT=${CHECKPOINT_ROOT:-/workspace/3b_trained_against_verifier_with_summary}
+CHECKPOINT_ROOT=${CHECKPOINT_ROOT:-}
 DATASET_URI=${DATASET_URI:-s3://grteambucket/genverify/grader_ablation/grader_eval.parquet}
-MODEL_TYPE=reasoning-summary
+MODEL_TYPE=${MODEL_TYPE:-}
 ###############################################################################
 
 [[ -z $HF_TOKEN ]] && echo "⚠️  HF_TOKEN not set – proceeding without it" >&2
